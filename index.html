@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tap the Button Game</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f0f0f0;
+  }
+  .container {
+    margin-top: 50px;
+  }
+  #gameArea {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  #startButton, #tapButton, #restartButton {
+    display: block;
+    width: 200px;
+    margin: 20px auto;
+    padding: 10px 20px;
+    font-size: 18px;
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  #tapButton:hover, #restartButton:hover {
+    background-color: #45a049;
+  }
+  #score {
+    font-size: 24px;
+    margin-top: 20px;
+  }
+  #cooldown {
+    font-size: 14px;
+    color: #888;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div id="gameArea">
+    <h2>Tap the Button Game</h2>
+    <p>Click the button as many times as you can in 10 seconds!</p>
+    <button id="startButton" onclick="startGame()">Start Game</button>
+    <button id="tapButton" onclick="incrementScore()" disabled>Tap Me!</button>
+    <button id="restartButton" onclick="restartGame()" style="display: none;">Restart Game</button>
+    <p id="score"></p>
+    <p id="cooldown"></p>
+  </div>
+</div>
+
+<script>
+  let score = 0;
+  let gameStarted = false;
+  let gameCount = 0;
+  const maxGamesPerDay = 3;
+  const cooldownTime = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+  let lastGameTime = localStorage.getItem('lastGameTime');
+
+  // Update cooldown status
+  function updateCooldownStatus() {
+    if (gameCount >= maxGamesPerDay) {
+      document.getElementById('cooldown').textContent = 'You have reached the maximum games for today. Please wait for cooldown.';
+      document.getElementById('startButton').disabled = true;
+    } else {
+      document.getElementById('cooldown').textContent = '';
+      document.getElementById('startButton').disabled = false;
+    }
+  }
+
+  // Start the game
+  function startGame() {
+    if (gameCount >= maxGamesPerDay) {
+      alert('You have reached the maximum games for today. Please wait for cooldown.');
+      return;
+    }
+
+    score = 0;
+    gameStarted = true;
+    document.getElementById('score').textContent = 'Score: 0';
+    document.getElementById('startButton').disabled = true;
+    document.getElementById('tapButton').disabled = false;
+    document.getElementById('tapButton').focus();
+    document.getElementById('restartButton').style.display = 'none';
+
+    // Set timeout for 10 seconds
+    setTimeout(endGame, 10000);
+  }
+
+  // End the game
+  function endGame() {
+    gameStarted = false;
+    gameCount++;
+    localStorage.setItem('gameCount', gameCount);
+    localStorage.setItem('lastGameTime', new Date().getTime());
+    document.getElementById('tapButton').disabled = true;
+    document.getElementById('restartButton').style.display = 'block';
+    alert(`Game over! Your final score is ${score}.`);
+    updateCooldownStatus();
+  }
+
+  // Increment score
+  function incrementScore() {
+    if (gameStarted) {
+      score++;
+      document.getElementById('score').textContent = `Score: ${score}`;
+    }
+  }
+
+  // Restart the game
+  function restartGame() {
+    document.getElementById('startButton').disabled = false;
+    document.getElementById('tapButton').disabled = true;
+    document.getElementById('restartButton').style.display = 'none';
+    document.getElementById('score').textContent = '';
+  }
+
+  // Check cooldown status on page load
+  window.onload = function() {
+    if (!lastGameTime) {
+      localStorage.setItem('gameCount', 0);
+      localStorage.setItem('lastGameTime', new Date().getTime());
+      lastGameTime = localStorage.getItem('lastGameTime');
+    } else {
+      gameCount = parseInt(localStorage.getItem('gameCount'));
+      const currentTime = new Date().getTime();
+      const elapsedTime = currentTime - parseInt(lastGameTime);
+      if (elapsedTime < cooldownTime) {
+        const remainingTime = cooldownTime - elapsedTime;
+        const remainingHours = Math.floor(remainingTime / (1000 * 60 * 60));
+        const remainingMinutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+        document.getElementById('cooldown').textContent = `Next game available in ${remainingHours} hours and ${remainingMinutes} minutes.`;
+        document.getElementById('startButton').disabled = true;
+      }
+    }
+    updateCooldownStatus();
+  };
+</script>
+
+</body>
+</html>
